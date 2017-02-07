@@ -31,7 +31,7 @@ class ComplexType implements Type {
     }
 }
 
-class Attribute {
+class Attribute implements Type {
     String name
     def type
 
@@ -50,7 +50,7 @@ class Group implements Type {
     }
 }
 
-class Element {
+class Element implements Type {
     String name
     Boolean isAbstract
     def type
@@ -60,7 +60,7 @@ class Element {
     }
 }
 
-class Reference {
+class Reference implements Type {
     def name
     def type
 
@@ -294,16 +294,17 @@ class SchemaLoader {
             if (entityType != null) {
                 //return samplesFor(entityType, path + ['@' + entity.getName()], didAlias)
                 return samplesFor(entityType, path + [entity.getName()], didAlias)
-            } else if (entity.getType() instanceof String) {
-                if (entity.getType().toLowerCase().contains("bool")) {
+            } else if (entity.getType() instanceof Type) {
+                return samplesFor(entity.getType(), path + [entity.getName()], false)
+            } else {
+                def typeName = entity.getType().toString().toLowerCase()
+                if (typeName.contains("bool") || typeName.contains("enumeration")) {
                     //def result = path + ['@' + entity.getName()]
                     def result = path + [entity.getName()]
                     return [result]
                 } else {
                     println "ignoring attribute type ${entity.getType()}"
                 }
-            } else {
-                return samplesFor(entity.getType(), path + [entity.getName()], false)
             }
 
         } else if (entity instanceof Group) {
