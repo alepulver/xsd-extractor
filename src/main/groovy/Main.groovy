@@ -1,5 +1,6 @@
 import groovy.util.slurpersupport.NodeChild
 
+
 interface Type {
 
 }
@@ -9,6 +10,12 @@ interface Visitor {
     def caseComplexType(name, attributes, children)
     def caseAttribute()
     def caseElement()
+}
+
+
+class Namespace {
+    static String namespace
+
 }
 
 class SimpleType implements Type {
@@ -50,7 +57,9 @@ class Group implements Type {
     }
 }
 
-class Element implements Type {
+
+class Element {
+    String namespace = Namespace.namespace
     String name
     Boolean isAbstract
     def type
@@ -88,6 +97,14 @@ class SchemaLoader {
 
     void process(File f) {
         def rootNode = new XmlSlurper().parse(f)
+        def fileNameList = f.getName().split("-")
+        if (fileNameList.size() > 1) {
+            Namespace.namespace = fileNameList[1].split("\\.")[0]
+        } else {
+            Namespace.namespace = fileNameList[0].split("\\.")[0]
+        }
+
+        println Namespace.namespace
 
         rootNode.children().each { node ->
             def name = node.name()
@@ -267,12 +284,12 @@ class SchemaLoader {
                 }
                 def entityType = types.get(typeName)
                 if (entityType != null) {
-                    return samplesFor(entityType, path + [entity.getName()], false)
+                    return samplesFor(entityType, path + [entity.namespace + ":" + entity.getName()], false)
                 } else {
                     println "unknown type: ${typeName} for ${entity}"
                 }
             } else {
-                return samplesFor(entity.getType(), path + [entity.getName()], false)
+                return samplesFor(entity.getType(), path + [entity.namespace + ":" + entity.getName()], false)
             }
 
         } else if (entity instanceof Reference) {
